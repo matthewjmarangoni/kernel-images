@@ -50,7 +50,19 @@ echo "flags file: $FLAGS_FILE"
 cat "$FLAGS_FILE"
 
 # Build docker run argument list
-RUN_ARGS=(
+RUN_ARGS=()
+
+if [[ "${DOCKER_DETACH:-}" == "true" ]]; then
+  RUN_ARGS+=( -d )
+else
+  RUN_ARGS+=( -it )
+fi
+
+if [[ "${DOCKER_EPHEMERAL:-}" == "true" ]]; then
+  RUN_ARGS+=( --rm )
+fi
+
+RUN_ARGS+=(
   --name "$NAME"
   --privileged
   --tmpfs /dev/shm:size=2g
@@ -85,4 +97,4 @@ if [[ "${ENABLE_WEBRTC:-}" == "true" ]]; then
 fi
 
 docker rm -f "$NAME" 2>/dev/null || true
-docker run -it "${RUN_ARGS[@]}" "$IMAGE"
+docker run "${RUN_ARGS[@]}" "$IMAGE"

@@ -10,7 +10,19 @@ source ../../shared/ensure-common-build-run-vars.sh chromium-headless
 HOST_RECORDINGS_DIR="$SCRIPT_DIR/recordings"
 mkdir -p "$HOST_RECORDINGS_DIR"
 
-RUN_ARGS=(
+RUN_ARGS=()
+
+if [[ "${DOCKER_DETACH:-}" == "true" ]]; then
+  RUN_ARGS+=( -d )
+else
+  RUN_ARGS+=( -it )
+fi
+
+if [[ "${DOCKER_EPHEMERAL:-true}" == "true" ]]; then
+  RUN_ARGS+=( --rm )
+fi
+
+RUN_ARGS+=(
   --name "$NAME"
   --privileged
   --tmpfs /dev/shm:size=2g
@@ -30,4 +42,4 @@ if [[ $# -ge 1 && -n "$1" ]]; then
 fi
 
 docker rm -f "$NAME" 2>/dev/null || true
-docker run -it --rm "${ENTRYPOINT_ARG[@]}" "${RUN_ARGS[@]}" "$IMAGE"
+docker run "${ENTRYPOINT_ARG[@]}" "${RUN_ARGS[@]}" "$IMAGE"

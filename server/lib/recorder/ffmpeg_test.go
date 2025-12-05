@@ -18,11 +18,13 @@ func defaultParams(tempDir string) FFmpegRecordingParams {
 	fr := 5
 	disp := 0
 	size := 1
+	logLevel := "quiet"
 	return FFmpegRecordingParams{
 		FrameRate:   &fr,
 		DisplayNum:  &disp,
 		MaxSizeInMB: &size,
 		OutputDir:   &tempDir,
+		LogLevel:    &logLevel,
 	}
 }
 

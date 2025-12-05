@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: oapi-generate build dev test clean
+.PHONY: oapi-generate build dev test test-ffmpeg-integration-headful test-ffmpeg-integration-headless clean
 
 BIN_DIR ?= $(CURDIR)/bin
 OAPI_CODEGEN ?= $(BIN_DIR)/oapi-codegen
@@ -36,6 +36,16 @@ dev: build $(RECORDING_DIR)
 test:
 	go vet ./...
 	go test -v -race ./...
+
+test-ffmpeg-integration-headless:
+	@echo "Running FFmpeg integration tests in headless container ..."
+	@IMAGE_HEADLESS="$(or $(IMAGE_HEADLESS),onkernel/chromium-headless-test:latest)"; \
+	IMAGE_HEADLESS=$$IMAGE_HEADLESS DISPLAY_NUM=$(DISPLAY_NUM) ./lib/recorder/test-ffmpeg-integration.sh
+
+test-ffmpeg-integration-headful:
+	@echo "Running FFmpeg integration tests in headful container ..."
+	@IMAGE_HEADFUL="$(or $(IMAGE_HEADFUL),onkernel/chromium-headful-test:latest)"; \
+	IMAGE_HEADFUL=$$IMAGE_HEADFUL DISPLAY_NUM=$(DISPLAY_NUM) ./lib/recorder/test-ffmpeg-integration.sh
 
 clean:
 	@rm -rf $(BIN_DIR)

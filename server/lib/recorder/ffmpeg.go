@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -57,6 +58,7 @@ type FFmpegRecordingParams struct {
 	// MaxDurationInSeconds optionally limits the total recording time. If nil there is no duration limit.
 	MaxDurationInSeconds *int
 	OutputDir            *string
+	LogLevel             *string
 }
 
 func (p FFmpegRecordingParams) Validate() error {
@@ -74,6 +76,10 @@ func (p FFmpegRecordingParams) Validate() error {
 	}
 	if p.MaxDurationInSeconds != nil && *p.MaxDurationInSeconds <= 0 {
 		return fmt.Errorf("max duration must be greater than 0 seconds")
+	}
+	validLogLevels := []string{"quiet", "panic", "fatal", "error", "warning", "info", "verbose", "debug", "trace"}
+	if p.LogLevel != nil && !slices.Contains(validLogLevels, *p.LogLevel) {
+		return fmt.Errorf("log level must be a known value")
 	}
 
 	return nil
@@ -104,6 +110,7 @@ func mergeFFmpegRecordingParams(config FFmpegRecordingParams, overrides FFmpegRe
 		MaxSizeInMB:          config.MaxSizeInMB,
 		MaxDurationInSeconds: config.MaxDurationInSeconds,
 		OutputDir:            config.OutputDir,
+		LogLevel:             config.LogLevel,
 	}
 	if overrides.FrameRate != nil {
 		merged.FrameRate = overrides.FrameRate
@@ -119,6 +126,9 @@ func mergeFFmpegRecordingParams(config FFmpegRecordingParams, overrides FFmpegRe
 	}
 	if overrides.OutputDir != nil {
 		merged.OutputDir = overrides.OutputDir
+	}
+	if overrides.LogLevel != nil {
+		merged.LogLevel = overrides.LogLevel
 	}
 
 	return merged
@@ -288,29 +298,34 @@ func (fr *FFmpegRecorder) Delete(ctx context.Context) error {
 	return nil
 }
 
-// ffmpegArgs generates platform-specific ffmpeg command line arguments. Allegedly order matters.
+// ffmpegArgs generates platform-specific ffmpeg command line arguments. Order matters.
 func ffmpegArgs(params FFmpegRecordingParams, outputPath string) ([]string, error) {
-	var args []string
+	// global/generic/main options first
+	var args = []string{}
 
-	// Input options first
+	if params.LogLevel != nil {
+		args = append(args, "-loglevel", *params.LogLevel)
+	}
+
+	// Input options second
 	switch runtime.GOOS {
 	case "darwin":
-		args = []string{
+		args = append(args, []string{
 			// Input options for AVFoundation
 			"-f", "avfoundation",
 			"-framerate", strconv.Itoa(*params.FrameRate),
 			"-pixel_format", "nv12",
 			// Input file
 			"-i", fmt.Sprintf("%d:none", *params.DisplayNum), // Screen capture, no audio
-		}
+		}...)
 	case "linux":
-		args = []string{
+		args = append(args, []string{
 			// Input options for X11
 			"-f", "x11grab",
 			"-framerate", strconv.Itoa(*params.FrameRate),
 			// Input file
 			"-i", fmt.Sprintf(":%d", *params.DisplayNum), // X11 display
-		}
+		}...)
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", runtime.GOOS)
 	}

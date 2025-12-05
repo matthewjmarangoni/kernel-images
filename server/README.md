@@ -89,3 +89,19 @@ make oapi-generate
 ```bash
 make test
 ```
+
+### Running FFmpeg Integration Tests Inside Containers
+
+Once an image is built Makefile targets or a script are available to assist running FFmpeg integration tests in containers with Docker.
+
+**Makefile recipes:**
+```bash
+make test-ffmpeg-integration-headful IMAGE=kernel-headful-test:latest
+make test-ffmpeg-integration-headless IMAGE=kernel-headless-test:latest
+```
+
+**Script:**
+```bash
+IMAGE_HEADLESS=kernel-headless-test:latest ./lib/recorder/test-ffmpeg-integration.sh
+IMAGE_HEADLESS=kernel-headful-test:latest ./lib/recorder/test-ffmpeg-integration.sh
+```

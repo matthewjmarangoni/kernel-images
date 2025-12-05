@@ -32,5 +32,16 @@
 	// WebRTC UDP ports
 	"appPort": [
 		"56000-56100:56000-56100/udp"
-	]
+	],
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"gopls": {
+					"build.buildFlags": [
+						"-tags=integration"
+					]
+				}
+			}
+		}
+	}
 }
