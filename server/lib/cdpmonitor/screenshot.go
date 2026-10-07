@@ -97,9 +97,11 @@ func (m *Monitor) captureScreenshot(parentCtx context.Context, sourceEvent strin
 	})
 }
 
-// captureViaFFmpeg runs ffmpeg x11grab to capture a PNG screenshot.
-// If divisor > 1, a scale filter is applied to reduce the output size.
-func captureViaFFmpeg(ctx context.Context, displayNum, divisor int) ([]byte, error) {
+// FFmpegScreenshotArgs returns the ffmpeg arguments captureViaFFmpeg runs to
+// grab one frame of the display to stdout. If divisor > 1, a scale filter is
+// applied to reduce the output size. Exported so the e2e ffmpeg compatibility
+// suite runs exactly these arguments against the image's ffmpeg.
+func FFmpegScreenshotArgs(displayNum, divisor int) []string {
 	args := []string{
 		"-f", "x11grab",
 		"-i", fmt.Sprintf(":%d", displayNum),
@@ -108,10 +110,13 @@ func captureViaFFmpeg(ctx context.Context, displayNum, divisor int) ([]byte, err
 	if divisor > 1 {
 		args = append(args, "-vf", fmt.Sprintf("scale=iw/%d:ih/%d", divisor, divisor))
 	}
-	args = append(args, "-f", "image2", "pipe:1")
+	return append(args, "-f", "image2", "pipe:1")
+}
 
+// captureViaFFmpeg runs ffmpeg x11grab to capture a screenshot.
+func captureViaFFmpeg(ctx context.Context, displayNum, divisor int) ([]byte, error) {
 	var out, stderr bytes.Buffer
-	cmd := exec.CommandContext(ctx, "ffmpeg", args...)
+	cmd := exec.CommandContext(ctx, "ffmpeg", FFmpegScreenshotArgs(displayNum, divisor)...)
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

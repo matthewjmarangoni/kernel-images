@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: oapi-generate repl-help-generate repl-help-check runtime-typecheck build dev test test-unit test-runtime test-e2e clean
+.PHONY: oapi-generate repl-help-generate repl-help-check runtime-typecheck build dev test test-unit test-runtime test-e2e test-ffmpeg clean
 
 BIN_DIR ?= $(CURDIR)/bin
 RECORDING_DIR ?= $(CURDIR)/recordings
@@ -57,6 +57,12 @@ test-e2e:
 	@echo "=== Running e2e tests (this may take a few minutes) ==="
 	@echo ""
 	go test -v -race -count=1 -timeout 120m ./e2e/
+
+# `test-ffmpeg` runs only the ffmpeg compatibility suite (also part of test-e2e).
+# Point E2E_CHROMIUM_HEADLESS_IMAGE / E2E_CHROMIUM_HEADFUL_IMAGE at locally built
+# images to check an ffmpeg version bump before pushing.
+test-ffmpeg:
+	go test -v -race -count=1 -timeout 30m -run '^TestFFmpegCompatibility$$' ./e2e/
 
 clean:
 	@rm -rf $(BIN_DIR)

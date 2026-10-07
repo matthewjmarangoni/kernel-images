@@ -91,3 +91,13 @@ make oapi-generate
 ```bash
 make test
 ```
+
+### FFmpeg compatibility tests
+
+The images pin a static ffmpeg build (`FFMPEG_VERSION` in each image's Dockerfile). `e2e/e2e_ffmpeg_test.go` drives the recording and screenshot APIs against both images so an ffmpeg bump that breaks the server fails `make test-e2e` in CI. To run just that suite against locally built images:
+
+```bash
+E2E_CHROMIUM_HEADLESS_IMAGE=kernel-headless-test:latest \
+E2E_CHROMIUM_HEADFUL_IMAGE=kernel-headful-test:latest \
+make test-ffmpeg
+```
